@@ -1,16 +1,13 @@
 from datetime import datetime, timezone
 from typing import cast, Any
 
-from dulwich.porcelain import checkout
 from fastapi import APIRouter, Depends, status, HTTPException
 from pydantic import EmailStr
 from sqlalchemy import select, delete
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import joinedload
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.sql.functions import user
-from sqlalchemy.testing.pickleable import User
 
 from src.exceptions.security import TokenExpiredError, InvalidTokenError
 
@@ -33,15 +30,11 @@ from src.schemas.accounts import (UserRegistrationResponseSchema,
                                   PasswordResetCompleteRequestSchema, TokenRefreshRequestSchema,
                                   TokenRefreshResponseSchema, )
 from src.database import get_db
-from src.security.passwords import verify_password, hash_password
-from src.exceptions import BaseSecurityError
 from src.security.token_manager import JWTAuthManager
-import traceback
 import logging
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -94,20 +87,6 @@ async def create_user(db: AsyncSession, data: UserRegistrationRequestSchema):
 async def get_user_by_email(db: AsyncSession, email: EmailStr):
     db_user = await db.execute(select(UserModel).where(UserModel.email == email))
     return db_user.scalar_one_or_none()
-
-
-# @router.delete("/users-delete/")
-# async def users_delete_all(db: AsyncSession = Depends(get_db)):
-#     await db.execute(delete(UserModel))
-#     await db.commit()
-#     return {"detail": "success"}
-#
-#
-# @router.get("/user-groups/")
-# async def get_user_groups(db: AsyncSession = Depends(get_db)):
-#     result = await db.execute(select(UserGroupModel))
-#     groups = result.scalars().all()
-#     return [{"id": group.id, "name": group.name} for group in groups]
 
 
 @router.post("/register/", response_model=UserRegistrationResponseSchema, status_code=status.HTTP_201_CREATED)
@@ -303,8 +282,8 @@ async def refresh(
         )
     except InvalidTokenError:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token not found."
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token has expired."
         )
 
     result = await db.execute(

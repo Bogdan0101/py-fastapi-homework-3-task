@@ -1,5 +1,3 @@
-from typing import Any, Self
-
 from pydantic import BaseModel, EmailStr, field_validator, Field, ConfigDict
 
 from src.database.validators.accounts import validate_password_strength, validate_email
