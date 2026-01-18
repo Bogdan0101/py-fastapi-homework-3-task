@@ -3,19 +3,26 @@ from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
 
-from config import get_settings
-from database import Base
+from src.config.dependencies import get_settings
+from src.database.models.base import Base
 
 settings = get_settings()
 
 SQLITE_DATABASE_URL = f"sqlite+aiosqlite:///{settings.PATH_TO_DB}"
-sqlite_engine = create_async_engine(SQLITE_DATABASE_URL, echo=False)
+sqlite_engine = create_async_engine(
+    SQLITE_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    echo=False
+)
 AsyncSQLiteSessionLocal = sessionmaker(  # type: ignore
     bind=sqlite_engine,
     class_=AsyncSession,
     expire_on_commit=False
 )
+sync_database_url = f"sqlite:///{settings.PATH_TO_DB}"
+sync_sqlite_engine = create_engine(sync_database_url, echo=False)
 
 
 async def get_sqlite_db() -> AsyncGenerator[AsyncSession, None]:

@@ -5,11 +5,10 @@ from schemas.movies import (
     MovieCreateSchema,
     MovieUpdateSchema
 )
-from schemas.accounts import (
+from src.schemas.accounts import (
     UserRegistrationRequestSchema,
     UserRegistrationResponseSchema,
     UserActivationRequestSchema,
-    MessageResponseSchema,
     PasswordResetRequestSchema,
     PasswordResetCompleteRequestSchema,
     UserLoginResponseSchema,

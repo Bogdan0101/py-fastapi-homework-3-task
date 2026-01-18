@@ -2,11 +2,16 @@ import os
 
 from fastapi import Depends
 
-from config.settings import TestingSettings, Settings, BaseAppSettings
-from security.interfaces import JWTAuthManagerInterface
-from security.token_manager import JWTAuthManager
+from src.config.settings import TestingSettings, Settings, BaseAppSettings
+from src.security.interfaces import JWTAuthManagerInterface
+from src.security.token_manager import JWTAuthManager
+from functools import lru_cache
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
+@lru_cache()
 def get_settings() -> BaseAppSettings:
     """
     Retrieve the application settings based on the current environment.

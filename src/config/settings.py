@@ -3,12 +3,15 @@ from pathlib import Path
 from typing import Any
 
 from pydantic_settings import BaseSettings
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class BaseAppSettings(BaseSettings):
-    BASE_DIR: Path = Path(__file__).parent.parent
-    PATH_TO_DB: str = str(BASE_DIR / "database" / "source" / "theater.db")
-    PATH_TO_MOVIES_CSV: str = str(BASE_DIR / "database" / "seed_data" / "imdb_movies.csv")
+    BASE_DIR: Path = Path(__file__).parent.parent.parent
+    PATH_TO_DB: str = str(BASE_DIR / "src" / "database" / "source" / "theater.db")
+    PATH_TO_MOVIES_CSV: str = str(BASE_DIR / "src" / "database" / "seed_data" / "imdb_movies.csv")
     LOGIN_TIME_DAYS: int = 7
 
 
@@ -19,9 +22,13 @@ class Settings(BaseAppSettings):
     POSTGRES_DB_PORT: int = int(os.getenv("POSTGRES_DB_PORT", 5432))
     POSTGRES_DB: str = os.getenv("POSTGRES_DB", "test_db")
 
-    SECRET_KEY_ACCESS: str = os.getenv("SECRET_KEY_ACCESS", os.urandom(32))
-    SECRET_KEY_REFRESH: str = os.getenv("SECRET_KEY_REFRESH", os.urandom(32))
+    SECRET_KEY_ACCESS: str = os.getenv("SECRET_KEY_ACCESS")
+    SECRET_KEY_REFRESH: str = os.getenv("SECRET_KEY_REFRESH")
     JWT_SIGNING_ALGORITHM: str = os.getenv("JWT_SIGNING_ALGORITHM", "HS256")
+
+    class Config:
+        env_file = ".env"
+        extra = "ignore"
 
 
 class TestingSettings(BaseAppSettings):
@@ -34,5 +41,5 @@ class TestingSettings(BaseAppSettings):
         object.__setattr__(
             self,
             'PATH_TO_MOVIES_CSV',
-            str(self.BASE_DIR / "database" / "seed_data" / "test_data.csv")
+            str(self.BASE_DIR / "src" / "database" / "seed_data" / "test_data.csv")
         )

@@ -6,7 +6,7 @@ from sqlalchemy import String, Float, Text, DECIMAL, UniqueConstraint, Date, For
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import Enum as SQLAlchemyEnum
 
-from database import Base
+from src.database.models.base import Base
 
 
 class MovieStatusEnum(str, Enum):
@@ -24,6 +24,7 @@ MoviesGenresModel = Table(
     Column(
         "genre_id",
         ForeignKey("genres.id", ondelete="CASCADE"), primary_key=True, nullable=False),
+    extend_existing=True
 )
 
 ActorsMoviesModel = Table(
@@ -35,6 +36,7 @@ ActorsMoviesModel = Table(
     Column(
         "actor_id",
         ForeignKey("actors.id", ondelete="CASCADE"), primary_key=True, nullable=False),
+    extend_existing=True
 )
 
 MoviesLanguagesModel = Table(
@@ -42,11 +44,13 @@ MoviesLanguagesModel = Table(
     Base.metadata,
     Column("movie_id", ForeignKey("movies.id", ondelete="CASCADE"), primary_key=True),
     Column("language_id", ForeignKey("languages.id", ondelete="CASCADE"), primary_key=True),
+    extend_existing=True
 )
 
 
 class GenreModel(Base):
     __tablename__ = "genres"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
@@ -63,6 +67,7 @@ class GenreModel(Base):
 
 class ActorModel(Base):
     __tablename__ = "actors"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
@@ -79,12 +84,16 @@ class ActorModel(Base):
 
 class CountryModel(Base):
     __tablename__ = "countries"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     code: Mapped[str] = mapped_column(String(3), unique=True, nullable=False)
     name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
-    movies: Mapped[list["MovieModel"]] = relationship("MovieModel", back_populates="country")
+    movies: Mapped[list["MovieModel"]] = relationship(
+        "MovieModel",
+        back_populates="country"
+    )
 
     def __repr__(self):
         return f"<Country(code='{self.code}', name='{self.name}')>"
@@ -92,6 +101,7 @@ class CountryModel(Base):
 
 class LanguageModel(Base):
     __tablename__ = "languages"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
@@ -121,28 +131,32 @@ class MovieModel(Base):
     revenue: Mapped[float] = mapped_column(Float, nullable=False)
 
     country_id: Mapped[int] = mapped_column(ForeignKey("countries.id"), nullable=False)
-    country: Mapped["CountryModel"] = relationship("CountryModel", back_populates="movies")
+    country: Mapped["CountryModel"] = relationship(
+        CountryModel,
+        back_populates="movies"
+    )
 
     genres: Mapped[list["GenreModel"]] = relationship(
-        "GenreModel",
+        GenreModel,
         secondary=MoviesGenresModel,
         back_populates="movies"
     )
 
     actors: Mapped[list["ActorModel"]] = relationship(
-        "ActorModel",
+        ActorModel,
         secondary=ActorsMoviesModel,
         back_populates="movies"
     )
 
     languages: Mapped[list["LanguageModel"]] = relationship(
-        "LanguageModel",
+        LanguageModel,
         secondary=MoviesLanguagesModel,
         back_populates="movies"
     )
 
     __table_args__ = (
-        UniqueConstraint("name", "date", name="unique_movie_constraint"),
+        UniqueConstraint("name", "date", name="unique_movie_constraint", ),
+        {"extend_existing": True}
     )
 
     @classmethod

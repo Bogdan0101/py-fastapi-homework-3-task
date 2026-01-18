@@ -3,8 +3,8 @@ from typing import Optional
 
 from jose import jwt, JWTError, ExpiredSignatureError
 
-from exceptions import TokenExpiredError, InvalidTokenError
-from security.interfaces import JWTAuthManagerInterface
+from src.exceptions.security import TokenExpiredError, InvalidTokenError
+from src.security.interfaces import JWTAuthManagerInterface
 
 
 class JWTAuthManager(JWTAuthManagerInterface):
@@ -36,6 +36,8 @@ class JWTAuthManager(JWTAuthManagerInterface):
         """
         Create a new access token with a default or specified expiration time.
         """
+        data = data.copy()
+        data["token_type"] = "access"
         return self._create_token(
             data,
             self._secret_key_access,
@@ -45,6 +47,8 @@ class JWTAuthManager(JWTAuthManagerInterface):
         """
         Create a new refresh token with a default or specified expiration time.
         """
+        data = data.copy()
+        data["token_type"] = "refresh"
         return self._create_token(
             data,
             self._secret_key_refresh,
@@ -66,7 +70,14 @@ class JWTAuthManager(JWTAuthManagerInterface):
         Decode and validate a refresh token, returning the token's data.
         """
         try:
-            return jwt.decode(token, self._secret_key_refresh, algorithms=[self._algorithm])
+            payload = jwt.decode(
+                token,
+                self._secret_key_refresh,
+                algorithms=[self._algorithm]
+            )
+            if payload.get("token_type") != "refresh":
+                raise InvalidTokenError("Not refresh token.")
+            return payload
         except ExpiredSignatureError:
             raise TokenExpiredError
         except JWTError as error:
